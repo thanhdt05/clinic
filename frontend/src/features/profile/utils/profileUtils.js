@@ -1,5 +1,5 @@
-export const API_BASE = "http://localhost:8080/api/profile";
-export const ADMIN_API_BASE = "http://localhost:8080/api/admin";
+export const API_BASE = "/api/profile";
+export const ADMIN_API_BASE = "/api/admin";
 
 export const createEmptyProfile = () => ({
   id: "",
@@ -46,14 +46,6 @@ export const formatProfileDate = (dateStr) => {
     month: "2-digit",
     year: "numeric",
   });
-};
-
-export const getStoredUser = () => {
-  try {
-    return JSON.parse(localStorage.getItem("user") || "null");
-  } catch {
-    return null;
-  }
 };
 
 export const normalizeProfileData = (data, fallback = createEmptyProfile()) => ({

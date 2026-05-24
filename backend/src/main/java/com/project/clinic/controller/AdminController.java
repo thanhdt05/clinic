@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
@@ -24,11 +25,13 @@ public class AdminController {
 
     private final AccountService accountService;
     private final DoctorService doctorService;
+    private final PasswordEncoder passwords;
 
     @Autowired
-    public AdminController(AccountService accountService, DoctorService doctorService) {
+    public AdminController(AccountService accountService, DoctorService doctorService, PasswordEncoder passwords) {
         this.accountService = accountService;
         this.doctorService = doctorService;
+        this.passwords = passwords;
     }
 
     // tìm kiếm + phân trang nhân viên
@@ -59,7 +62,7 @@ public class AdminController {
 
         Account account = new Account();
         account.setUsername(request.getUsername());
-        account.setPassword(request.getPassword());
+        account.setPassword(passwords.encode(request.getPassword()));
         account.setFullName(request.getFullName());
         account.setEmail(request.getEmail());
         account.setPhone(request.getPhone());
@@ -73,8 +76,11 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body(EmployeeMapper.toEmployeeResponse(createdAccount));
     }
 
+    public record EmployeeUpdate(String fullName, String email, String phone, String avatarUrl,
+                                 String password, Boolean active) {}
+
     @PutMapping("/employees/{id}")
-    public ResponseEntity<?> updateEmployee(@RequestBody Account request, @PathVariable int id){
+    public ResponseEntity<?> updateEmployee(@RequestBody EmployeeUpdate request, @PathVariable int id){
         Account existingAccount = accountService.findById(id);
         if (existingAccount == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy tài khoản");
@@ -85,15 +91,14 @@ public class AdminController {
                     .body("Không thể chuyển thành bác sĩ bằng API này");
         }
 
-        if (request.getFullName() != null) existingAccount.setFullName(request.getFullName());
-        if (request.getEmail() != null) existingAccount.setEmail(request.getEmail());
-        if (request.getPhone() != null) existingAccount.setPhone(request.getPhone());
-        if (request.getAvatarUrl() != null) existingAccount.setAvatarUrl(request.getAvatarUrl());
-        if (request.getPassword() != null && !request.getPassword().trim().isEmpty())
-            existingAccount.setPassword(request.getPassword());
-        if (request.isActive() != existingAccount.isActive()) {
-            existingAccount.setActive(request.isActive());
+        if (request.fullName() != null) existingAccount.setFullName(request.fullName());
+        if (request.email() != null) existingAccount.setEmail(request.email());
+        if (request.phone() != null) existingAccount.setPhone(request.phone());
+        if (request.avatarUrl() != null) existingAccount.setAvatarUrl(request.avatarUrl());
+        if (request.password() != null && !request.password().isBlank()) {
+            existingAccount.setPassword(passwords.encode(request.password()));
         }
+        if (request.active() != null) existingAccount.setActive(request.active());
 
         Account updatedAccount = accountService.save(existingAccount);
         return ResponseEntity.status(HttpStatus.OK).body(EmployeeMapper.toEmployeeResponse(updatedAccount));
@@ -159,7 +164,7 @@ public class AdminController {
 
         Account account = new Account();
         account.setUsername(request.getUsername());
-        account.setPassword(request.getPassword());
+        account.setPassword(passwords.encode(request.getPassword()));
         account.setFullName(request.getFullName());
         account.setEmail(request.getEmail());
         account.setPhone(request.getPhone());
@@ -197,7 +202,7 @@ public class AdminController {
         if (request.getAvatarUrl() != null) existingAccount.setAvatarUrl(request.getAvatarUrl());
 
         if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
-            existingAccount.setPassword(request.getPassword());
+            existingAccount.setPassword(passwords.encode(request.getPassword()));
         }
         accountService.save(existingAccount);
 

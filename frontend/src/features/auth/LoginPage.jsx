@@ -9,7 +9,7 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState("");
 
-  const { login } = useAuth();
+  const { login, checkingSession } = useAuth();
   const navigate = useNavigate();
 
   async function handleSubmit(event) {
@@ -88,7 +88,7 @@ function LoginPage() {
                   <button
                     type="submit"
                     className="btn btn-success w-100"
-                    disabled={loading}
+                    disabled={loading || checkingSession}
                   >
                     {loading ? "Đang đăng nhập..." : "Login"}
                   </button>

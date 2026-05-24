@@ -161,35 +161,6 @@ export const hasShiftOnDate = (shifts, date, type) => {
   );
 };
 
-const toFiniteNumber = (value) => {
-  const parsedValue = Number(value);
-  return Number.isFinite(parsedValue) ? parsedValue : null;
-};
-
-export const getScheduleRequestHeaders = (doctorId, viewerRole, viewerId) => {
-  const normalizedDoctorId = toFiniteNumber(doctorId);
-  const normalizedViewerId = toFiniteNumber(viewerId);
-  const normalizedViewerRole = String(viewerRole || "")
-    .trim()
-    .toUpperCase();
-
-  if (
-    normalizedViewerRole === "DOCTOR" &&
-    normalizedDoctorId !== null &&
-    normalizedViewerId === normalizedDoctorId
-  ) {
-    return {
-      role: "DOCTOR",
-      userId: normalizedViewerId,
-    };
-  }
-
-  return {
-    role: "RECEPTIONIST",
-    userId: normalizedViewerId ?? normalizedDoctorId ?? 1,
-  };
-};
-
 export const extractErrorMessage = (error, fallbackMessage) => {
   const responseData = error?.response?.data;
 

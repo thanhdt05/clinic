@@ -7,9 +7,9 @@ import {
 
 export { extractErrorMessage, formatApiDate, getWeekRange, getWeekRangeLabel };
 
-export const SHIFT_API_BASE = "http://localhost:8080/api/shifts";
-export const DOCTOR_API_BASE = "http://localhost:8080/api/receptionist/doctors";
-export const ROOM_API_BASE = "http://localhost:8080/api/rooms";
+export const SHIFT_API_BASE = "/api/shifts";
+export const DOCTOR_API_BASE = "/api/receptionist/doctors";
+export const ROOM_API_BASE = "/api/rooms";
 
 export const PERIOD_OPTIONS = [
   {
@@ -38,30 +38,6 @@ export const normalizeShiftText = (value) =>
     .replace(/[\u0300-\u036f]/g, "")
     .trim()
     .toLowerCase();
-
-export const getStoredUser = () => {
-  try {
-    return JSON.parse(localStorage.getItem("user") || "null");
-  } catch {
-    return null;
-  }
-};
-
-export const getShiftViewerContext = (user, storedUser = getStoredUser()) => {
-  const userId =
-    user?.id ||
-    user?.accountId ||
-    storedUser?.id ||
-    storedUser?.accountId ||
-    "";
-  const userRole = user?.role || storedUser?.role || "";
-
-  return {
-    userId,
-    userRole,
-    isReceptionist: userRole === "RECEPTIONIST",
-  };
-};
 
 export const shiftDateByDays = (date, days) => {
   const nextDate = new Date(date);

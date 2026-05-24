@@ -1,5 +1,5 @@
-export const RECEPTIONIST_API_BASE = "http://localhost:8080/api/receptionist";
-export const RECORD_API_BASE = "http://localhost:8080/api/records";
+export const RECEPTIONIST_API_BASE = "/api/receptionist";
+export const RECORD_API_BASE = "/api/records";
 
 export const createEmptyPatientInfo = () => ({
   patientId: "",

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import axios from "axios";
+import axios from "../../../api/http";
 import "../../../styles/entity-list.css";
 import { useAuth } from "../../../context/useAuth";
 import StaffCard from "../components/list/StaffCard";

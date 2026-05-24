@@ -1,36 +1,6 @@
-const BASE = "/api/dashboard";
+import http from "./http";
 
-const parseResponse = async (response) => {
-  const rawText = await response.text();
-
-  if (!rawText) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(rawText);
-  } catch {
-    return rawText;
-  }
-};
-
-export async function getDashboardStats({ role, accountId }) {
-  const response = await fetch(`${BASE}/stats`, {
-    headers: {
-      "X-User-Role": String(role || "").toUpperCase(),
-      "X-User-Id": String(accountId ?? 0),
-    },
-  });
-
-  const payload = await parseResponse(response);
-
-  if (!response.ok) {
-    throw new Error(
-      typeof payload === "string" && payload.trim() !== ""
-        ? payload
-        : "Không tải được dữ liệu dashboard.",
-    );
-  }
-
-  return payload || {};
+export async function getDashboardStats() {
+  const { data } = await http.get("/api/dashboard/stats");
+  return data || {};
 }

@@ -50,10 +50,7 @@ function DashboardView() {
         setLoading(true);
         setErrorText("");
 
-        const nextStats = await getDashboardStats({
-          role: userRole,
-          accountId: user?.accountId,
-        });
+        const nextStats = await getDashboardStats();
 
         if (isDisposed) {
           return;

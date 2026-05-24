@@ -51,7 +51,7 @@ public class ShiftMapper {
                 }
             }
 
-            if (userRole == Account.Role.RECEPTIONIST || (userRole == Account.Role.DOCTOR && isDoctorInRoom)) {
+            if (userRole != Account.Role.DOCTOR || isDoctorInRoom) {
                 ShiftResponseDTO.RoomDetailDTO roomDto = new ShiftResponseDTO.RoomDetailDTO();
                 roomDto.setRoomId(sr.getRoom().getRoomId());
                 roomDto.setRoomName(sr.getRoom().getName());

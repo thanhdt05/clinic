@@ -6,24 +6,26 @@ import com.project.clinic.entity.Account;
 import com.project.clinic.entity.Doctor;
 import com.project.clinic.mapper.DoctorMapper;
 import com.project.clinic.mapper.EmployeeMapper;
+import com.project.clinic.security.ClinicPrincipal;
 import com.project.clinic.service.AccountService;
 import com.project.clinic.service.DoctorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.net.URI;
@@ -53,21 +55,26 @@ public class ProfileController {
 
     private final AccountService accountService;
     private final DoctorService doctorService;
+    private final PasswordEncoder passwords;
     private final Path avatarStorageDirectory;
 
     @Autowired
     public ProfileController(
             AccountService accountService,
             DoctorService doctorService,
+            PasswordEncoder passwords,
             @Value("${app.upload.avatar-dir:uploads/avatars}") String avatarUploadDir
     ) {
         this.accountService = accountService;
         this.doctorService = doctorService;
+        this.passwords = passwords;
         this.avatarStorageDirectory = Paths.get(avatarUploadDir).toAbsolutePath().normalize();
     }
 
     @GetMapping("/me")
-    public ResponseEntity<?> getMyProfile(@RequestHeader("X-User-Id") int userId) {
+    public ResponseEntity<?> getMyProfile(@AuthenticationPrincipal ClinicPrincipal principal,
+                                         @RequestParam(required = false) Integer accountId) {
+        int userId = profileAccountId(principal, accountId);
         Account account = accountService.findById(userId);
         if (account == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy người dùng");
@@ -84,9 +91,11 @@ public class ProfileController {
     @PutMapping("/profile")
     @Transactional
     public ResponseEntity<?> updateProfile(
-            @RequestHeader("X-User-Id") int userId,
+            @AuthenticationPrincipal ClinicPrincipal principal,
+            @RequestParam(required = false) Integer accountId,
             @RequestBody ProfileResponseDTO request
     ) {
+        int userId = profileAccountId(principal, accountId);
         Account account = accountService.findById(userId);
         if (account == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy người dùng");
@@ -132,19 +141,19 @@ public class ProfileController {
     @PutMapping("/change-password")
     @Transactional
     public ResponseEntity<?> changePassword(
-            @RequestHeader("X-User-Id") int userId,
+            @AuthenticationPrincipal ClinicPrincipal principal,
             @RequestBody ChangePasswordDTO request
     ) {
-        Account account = accountService.findById(userId);
+        Account account = accountService.findById(principal.accountId());
         if (account == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy người dùng");
         }
 
-        if (!account.getPassword().equals(request.getCurrentPassword())) {
+        if (!passwords.matches(request.getCurrentPassword(), account.getPassword())) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Mật khẩu hiện tại không chính xác!");
         }
 
-        account.setPassword(request.getNewPassword());
+        account.setPassword(passwords.encode(request.getNewPassword()));
         accountService.save(account);
 
         return ResponseEntity.ok("Đổi mật khẩu thành công!");
@@ -153,10 +162,11 @@ public class ProfileController {
     @PostMapping("/upload-avatar")
     @Transactional
     public ResponseEntity<?> uploadAvatar(
-            @RequestHeader("X-User-Id") int userId,
+            @AuthenticationPrincipal ClinicPrincipal principal,
+            @RequestParam(required = false) Integer accountId,
             @RequestParam("file") MultipartFile file
     ) {
-        Account account = accountService.findById(userId);
+        Account account = accountService.findById(profileAccountId(principal, accountId));
         if (account == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Không tìm thấy người dùng");
         }
@@ -196,6 +206,16 @@ public class ProfileController {
         }
     }
 
+    private int profileAccountId(ClinicPrincipal principal, Integer accountId) {
+        if (accountId == null || accountId == principal.accountId()) {
+            return principal.accountId();
+        }
+        if (principal.role() != Account.Role.ADMIN) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        }
+        return accountId;
+    }
+
     private boolean isSupportedImageType(MultipartFile file) {
         String contentType = file.getContentType();
         if (!StringUtils.hasText(contentType)) {
@@ -219,31 +239,16 @@ public class ProfileController {
     }
 
     private String resolveFileExtension(MultipartFile file) {
-        String extension = StringUtils.getFilenameExtension(file.getOriginalFilename());
-        if (StringUtils.hasText(extension)) {
-            return extension.toLowerCase(Locale.ROOT);
-        }
-
-        String contentType = file.getContentType();
-        if ("image/png".equalsIgnoreCase(contentType)) {
-            return "png";
-        }
-        if ("image/gif".equalsIgnoreCase(contentType)) {
-            return "gif";
-        }
-        if ("image/webp".equalsIgnoreCase(contentType)) {
-            return "webp";
-        }
-
-        return "jpg";
+        return switch (file.getContentType().toLowerCase(Locale.ROOT)) {
+            case "image/png" -> "png";
+            case "image/gif" -> "gif";
+            case "image/webp" -> "webp";
+            default -> "jpg";
+        };
     }
 
     private String buildAvatarUrl(String storedFileName) {
-        return ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path(AVATAR_UPLOAD_URL_PREFIX)
-                .path("/")
-                .path(storedFileName)
-                .toUriString();
+        return AVATAR_UPLOAD_URL_PREFIX + "/" + storedFileName;
     }
 
     private void deleteStoredAvatarIfManaged(String avatarUrl) {

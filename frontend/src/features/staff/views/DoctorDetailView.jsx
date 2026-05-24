@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import axios from "../../../api/http";
 import { useAuth } from "../../../context/useAuth";
 import DoctorWeeklySchedule from "../../shift/components/schedule/DoctorWeeklySchedule";
 import DoctorAccountStatusModal from "../components/detail/DoctorAccountStatusModal";
@@ -17,7 +17,7 @@ import {
   getDoctorRecordId,
 } from "../utils/doctorDetailUtils";
 
-const PROFILE_API_BASE = "http://localhost:8080/api/profile";
+const PROFILE_API_BASE = "/api/profile";
 const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
 const ALLOWED_AVATAR_TYPES = new Set([
   "image/jpeg",
@@ -84,12 +84,6 @@ const DoctorDetailView = () => {
           {
             type: "doctor-list",
             url: `${RECEPTIONIST_API_BASE}/doctors`,
-            params: { page: 0, size: 100 },
-          },
-          { type: "fallback-detail", url: `${ADMIN_API_BASE}/doctors/${id}` },
-          {
-            type: "fallback-doctor-list",
-            url: `${ADMIN_API_BASE}/doctors`,
             params: { page: 0, size: 100 },
           },
         ];
@@ -195,10 +189,7 @@ const DoctorDetailView = () => {
         `${PROFILE_API_BASE}/upload-avatar`,
         avatarFormData,
         {
-          headers: {
-            "X-User-Id": id,
-            "Content-Type": "multipart/form-data",
-          },
+          params: { accountId: id },
         },
       );
 
@@ -347,16 +338,7 @@ const DoctorDetailView = () => {
           </div>
 
           <div className="col-lg-8">
-            <DoctorWeeklySchedule
-              doctorId={doctor.doctorId || doctor.id || id}
-              viewerRole={user?.role || "RECEPTIONIST"}
-              viewerId={
-                Number(user?.accountId) ||
-                Number(doctor.accountId) ||
-                Number(doctor.id) ||
-                1
-              }
-            />
+            <DoctorWeeklySchedule doctorId={doctor.doctorId || doctor.id || id} />
             <DoctorBioCard doctor={doctor} />
           </div>
 

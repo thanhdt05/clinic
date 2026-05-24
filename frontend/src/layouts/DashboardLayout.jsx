@@ -124,10 +124,14 @@ function Header() {
     setIsDropdownOpen((prev) => !prev);
   }
 
-  function handleLogout() {
+  async function handleLogout() {
     setIsDropdownOpen(false);
-    logout();
-    navigate("/login");
+    try {
+      await logout();
+      navigate("/login", { replace: true });
+    } catch {
+      alert("Không thể đăng xuất. Vui lòng thử lại.");
+    }
   }
 
   function handleOpenProfile() {

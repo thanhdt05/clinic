@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState, useMemo } from "react";
-import axios from "axios";
+import axios from "../../../api/http";
 import { useSearchParams } from "react-router-dom";
 import "../../../styles/entity-list.css";
 import { useAuth } from "../../../context/useAuth";
@@ -9,7 +9,7 @@ import RoomFormModal from "../components/RoomFormModal";
 import RoomDeleteModal from "../components/RoomDeleteModal";
 
 const RoomView = () => {
-  const ROOM_API_BASE_URL = "http://localhost:8080/api/rooms";
+  const ROOM_API_BASE_URL = "/api/rooms";
 
   const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();

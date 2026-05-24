@@ -1,5 +1,5 @@
 ﻿import React, { useEffect, useMemo, useRef, useState } from "react";
-import axios from "axios";
+import axios from "../../../api/http";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../context/useAuth";
 import "../styles/profile.css";
@@ -14,7 +14,6 @@ import {
   createEmptyPasswordForm,
   createEmptyProfile,
   getRoleLabel,
-  getStoredUser,
   normalizeProfileData,
 } from "../utils/profileUtils";
 
@@ -57,17 +56,7 @@ const ProfileView = () => {
   const [locking, setLocking] = useState(false);
   const [showLockModal, setShowLockModal] = useState(false);
 
-  const currentUserId = useMemo(() => {
-    const storedUser = getStoredUser();
-
-    return (
-      user?.id ||
-      user?.accountId ||
-      storedUser?.id ||
-      storedUser?.accountId ||
-      null
-    );
-  }, [user]);
+  const currentUserId = user?.accountId;
 
   const targetUserId = useMemo(() => {
     if (id) return Number(id);
@@ -101,9 +90,7 @@ const ProfileView = () => {
       setLoading(true);
 
       const response = await axios.get(`${API_BASE}/me`, {
-        headers: {
-          "X-User-Id": targetUserId,
-        },
+        params: { accountId: targetUserId },
       });
 
       const normalized = normalizeProfileData(response.data);
@@ -208,9 +195,7 @@ const ProfileView = () => {
     const response = isManagedEmployeeProfile
       ? await axios.put(`${ADMIN_API_BASE}/employees/${targetUserId}`, payload)
       : await axios.put(`${API_BASE}/profile`, payload, {
-          headers: {
-            "X-User-Id": targetUserId,
-          },
+          params: { accountId: targetUserId },
         });
 
     const normalized = normalizeProfileData(response.data, profile);
@@ -227,11 +212,6 @@ const ProfileView = () => {
       {
         currentPassword: passwordAction.currentPassword,
         newPassword: passwordAction.newPassword,
-      },
-      {
-        headers: {
-          "X-User-Id": targetUserId,
-        },
       },
     );
   };
@@ -279,10 +259,7 @@ const ProfileView = () => {
       formData.append("file", file);
 
       const response = await axios.post(`${API_BASE}/upload-avatar`, formData, {
-        headers: {
-          "X-User-Id": targetUserId,
-          "Content-Type": "multipart/form-data",
-        },
+        params: { accountId: targetUserId },
       });
 
       const avatarUrl =

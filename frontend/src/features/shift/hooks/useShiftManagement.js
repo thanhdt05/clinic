@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import axios from "../../../api/http";
 import {
   DOCTOR_API_BASE,
   ROOM_API_BASE,
@@ -11,8 +11,6 @@ import {
   createEmptyAssignment,
   createInitialShiftForm,
   extractErrorMessage,
-  getShiftViewerContext,
-  getStoredUser,
   getWeekRange,
   getWeekRangeLabel,
   mapShiftToFormData,
@@ -25,11 +23,7 @@ const DRAWER_MODES = {
 };
 
 export const useShiftManagement = (user) => {
-  const storedUser = getStoredUser();
-  const { userId, userRole, isReceptionist } = getShiftViewerContext(
-    user,
-    storedUser,
-  );
+  const isReceptionist = user?.role === "RECEPTIONIST";
 
   const [baseDate, setBaseDate] = useState(() => new Date());
   const [shifts, setShifts] = useState([]);
@@ -73,10 +67,6 @@ export const useShiftManagement = (user) => {
 
       const response = await axios.get(SHIFT_API_BASE, {
         params: { startDate, endDate },
-        headers: {
-          "X-User-Role": userRole,
-          "X-User-Id": userId,
-        },
       });
 
       setShifts(Array.isArray(response.data) ? response.data : []);
@@ -86,7 +76,7 @@ export const useShiftManagement = (user) => {
     } finally {
       setLoading(false);
     }
-  }, [endDate, startDate, userId, userRole]);
+  }, [endDate, startDate]);
 
   const fetchDoctors = useCallback(async () => {
     if (!isReceptionist) {
@@ -146,12 +136,7 @@ export const useShiftManagement = (user) => {
       }
 
       try {
-        const response = await axios.get(`${SHIFT_API_BASE}/${shiftId}`, {
-          headers: {
-            "X-User-Role": userRole,
-            "X-User-Id": userId,
-          },
-        });
+        const response = await axios.get(`${SHIFT_API_BASE}/${shiftId}`);
 
         const shift = response.data;
         setSelectedShift(shift);
@@ -162,7 +147,7 @@ export const useShiftManagement = (user) => {
         alert(extractErrorMessage(error, "Không thể tải chi tiết ca trực."));
       }
     },
-    [isReceptionist, userId, userRole],
+    [isReceptionist],
   );
 
   const updateWeek = useCallback((offset) => {
@@ -246,11 +231,7 @@ export const useShiftManagement = (user) => {
     try {
       setSaving(true);
 
-      await axios.post(SHIFT_API_BASE, buildShiftPayload(formData), {
-        headers: {
-          "X-User-Role": userRole,
-        },
-      });
+      await axios.post(SHIFT_API_BASE, buildShiftPayload(formData));
 
       closeDrawer();
       await fetchShifts();
@@ -261,7 +242,7 @@ export const useShiftManagement = (user) => {
     } finally {
       setSaving(false);
     }
-  }, [closeDrawer, fetchShifts, formData, userRole]);
+  }, [closeDrawer, fetchShifts, formData]);
 
   const handleUpdateShift = useCallback(async () => {
     if (!selectedShift?.shiftId) return;
@@ -270,7 +251,6 @@ export const useShiftManagement = (user) => {
       await axios.put(
         `${SHIFT_API_BASE}/${selectedShift.shiftId}`,
         buildShiftPayload(formData),
-        { headers: { "X-User-Role": userRole } },
       );
       closeDrawer();
       await fetchShifts();
@@ -281,7 +261,7 @@ export const useShiftManagement = (user) => {
     } finally {
       setSaving(false);
     }
-  }, [closeDrawer, fetchShifts, formData, selectedShift?.shiftId, userRole]);
+  }, [closeDrawer, fetchShifts, formData, selectedShift?.shiftId]);
 
   const handleDeleteShift = useCallback(async () => {
     if (!selectedShift?.shiftId) return;
@@ -300,9 +280,6 @@ export const useShiftManagement = (user) => {
       setDeleting(true);
       await axios.delete(
         `${SHIFT_API_BASE}/${selectedShift.shiftId}?deleteFuture=${deleteFuture}`,
-        {
-          headers: { "X-User-Role": userRole },
-        },
       );
       closeDrawer();
       await fetchShifts();
@@ -313,7 +290,7 @@ export const useShiftManagement = (user) => {
     } finally {
       setDeleting(false);
     }
-  }, [closeDrawer, fetchShifts, selectedShift?.shiftId, userRole]);
+  }, [closeDrawer, fetchShifts, selectedShift?.shiftId]);
 
   return {
     isReceptionist,

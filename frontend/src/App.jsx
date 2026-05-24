@@ -19,7 +19,8 @@ import "./styles/common.css";
 import "./styles/public.css";
 
 function PrivateRoute({ children }) {
-  const { user } = useAuth();
+  const { user, checkingSession } = useAuth();
+  if (checkingSession) return null;
   return user ? children : <Navigate to="/login" />;
 }
 

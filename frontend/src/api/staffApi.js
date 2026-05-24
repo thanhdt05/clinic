@@ -1,27 +1,16 @@
-const BASE = "/api";
+import http from "./http";
 
 export async function getAllEmployees() {
-  const response = await fetch(`${BASE}/admin/employees`);
-
-  if (!response.ok) throw new Error("Không tải được danh sách!");
-
-  return response.json();
+  const { data } = await http.get("/api/admin/employees");
+  return data;
 }
 
 export async function getDoctors() {
-  const response = await fetch(`${BASE}/admin/doctors`);
-
-  if (!response.ok) throw new Error("Không tải được danh sách!");
-
-  return response.json();
+  const { data } = await http.get("/api/admin/doctors");
+  return data;
 }
 
 export async function deleteEmployee(id) {
-  const response = await fetch(`${BASE}/admin/employees/${id}`, {
-    method: "DELETE",
-  });
-
-  if (!response.ok) throw new Error("Xóa thất bại!");
-
-  return response.json();
+  const { data } = await http.delete(`/api/admin/employees/${id}`);
+  return data;
 }

@@ -1,21 +1,16 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import axios from "axios";
+import axios from "../../../../api/http";
 import "../../styles/shift.css";
 import WeeklyScheduleGrid from "./WeeklyScheduleGrid";
 import {
   extractErrorMessage,
   filterDoctorShifts,
-  getScheduleRequestHeaders,
   getWeekRange,
   getWeekRangeLabel,
   SHIFT_API,
 } from "../../utils/doctorScheduleUtils";
 
-const DoctorWeeklySchedule = ({
-  doctorId,
-  viewerRole = "RECEPTIONIST",
-  viewerId = 1,
-}) => {
+const DoctorWeeklySchedule = ({ doctorId }) => {
   const [baseDate, setBaseDate] = useState(() => new Date());
   const [shifts, setShifts] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -29,10 +24,6 @@ const DoctorWeeklySchedule = ({
     startDate,
     endDate,
   } = useMemo(() => getWeekRange(baseDate), [baseDate]);
-  const requestHeaders = useMemo(
-    () => getScheduleRequestHeaders(doctorId, viewerRole, viewerId),
-    [doctorId, viewerId, viewerRole],
-  );
   const weekRangeLabel = useMemo(() => getWeekRangeLabel(weekDays), [weekDays]);
 
   const isToday = useCallback(
@@ -64,10 +55,6 @@ const DoctorWeeklySchedule = ({
     try {
       const response = await axios.get(SHIFT_API, {
         params: { startDate, endDate },
-        headers: {
-          "X-User-Role": requestHeaders.role,
-          "X-User-Id": requestHeaders.userId,
-        },
       });
 
       const allShifts = Array.isArray(response.data) ? response.data : [];
@@ -86,7 +73,7 @@ const DoctorWeeklySchedule = ({
     } finally {
       setLoading(false);
     }
-  }, [doctorId, endDate, requestHeaders.role, requestHeaders.userId, startDate]);
+  }, [doctorId, endDate, startDate]);
 
   useEffect(() => {
     loadShifts();

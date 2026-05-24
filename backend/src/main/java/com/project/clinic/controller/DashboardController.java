@@ -7,8 +7,10 @@ import com.project.clinic.repository.MedicalRecordRepository;
 import com.project.clinic.repository.PatientRepository;
 import com.project.clinic.repository.RoomRepository;
 import com.project.clinic.repository.ShiftRepository;
+import com.project.clinic.security.ClinicPrincipal;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -38,17 +40,9 @@ public class DashboardController {
     }
 
     @GetMapping("/stats")
-    public ResponseEntity<?> getDashboardStats(
-            @RequestHeader("X-User-Role") String roleStr,
-            @RequestHeader(value = "X-User-Id", defaultValue = "0") int userId) {
-
-        Account.Role role;
-        try {
-            role = Account.Role.valueOf(roleStr.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body("Role không hợp lệ");
-        }
-
+    public ResponseEntity<?> getDashboardStats(@AuthenticationPrincipal ClinicPrincipal principal) {
+        Account.Role role = principal.role();
+        int userId = principal.accountId();
         DashboardStatsDTO stats = new DashboardStatsDTO();
 
         LocalDate today = LocalDate.now();

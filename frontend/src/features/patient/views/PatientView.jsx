@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import axios from "axios";
+import axios from "../../../api/http";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import "../../../styles/entity-list.css";
 import { useAuth } from "../../../context/useAuth";

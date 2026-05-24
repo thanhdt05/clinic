@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import axios from "axios";
+import axios from "../../../api/http";
 import { useAuth } from "../../../context/useAuth";
 import "../styles/patient-detail.css";
 import PatientAddRecordModal from "../components/detail/PatientAddRecordModal";

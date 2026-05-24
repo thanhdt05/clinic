@@ -1,5 +1,5 @@
-export const ADMIN_API_BASE = "http://localhost:8080/api/admin";
-export const RECEPTIONIST_API_BASE = "http://localhost:8080/api/receptionist";
+export const ADMIN_API_BASE = "/api/admin";
+export const RECEPTIONIST_API_BASE = "/api/receptionist";
 
 export const SPECIALTY_OPTIONS = [
   "Khoa nội",
